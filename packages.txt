@@ -1,0 +1,17 @@
+# packages.txt for Streamlit Cloud
+# System packages required for the application
+
+# For OpenCV and image processing
+libgl1-mesa-glx
+libglib2.0-0
+
+# For Tesseract OCR (if needed in cloud - though limited functionality)
+tesseract-ocr
+tesseract-ocr-eng
+
+# For audio processing (though limited in cloud)
+libasound2-dev
+portaudio19-dev
+
+# For general system utilities
+libgomp1

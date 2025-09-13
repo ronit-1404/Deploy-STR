@@ -9,7 +9,7 @@ scikit-learn>=1.3.0
 joblib>=1.3.0
 
 # Screen analysis dependencies (cloud-compatible)
-opencv-python-headless>=4.8.0
+opencv-python-headless>=4.8.0  # Headless version for cloud
 pytesseract>=0.3.10
 Pillow>=10.0.0
 spacy>=3.6.0
@@ -32,8 +32,6 @@ flask-cors>=4.0.0
 scipy>=1.11.0
 python-dateutil>=2.8.2
 
-# Audio processing dependencies (local development only)
-# Uncomment for local development:
-# pyaudio>=0.2.11
-# librosa>=0.9.0
-# soundfile>=0.10.0
+# Note: Audio processing libraries removed for cloud compatibility
+# PyAudio and librosa are not compatible with Streamlit Cloud environment
+# Audio features will be disabled in cloud deployment

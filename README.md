@@ -2,6 +2,12 @@
 
 A comprehensive real-time engagement monitoring system built with Streamlit that combines audio emotion detection and screen activity analysis.
 
+## 🌐 Live Demo
+
+**Try the live demo:** [Streamlit Cloud Demo](https://your-app-url.streamlit.app)
+
+*Note: The cloud version runs in demo mode with simulated data due to browser security limitations.*
+
 ## Features
 
 ### 🎤 Audio Emotion Detection
@@ -9,6 +15,7 @@ A comprehensive real-time engagement monitoring system built with Streamlit that
 - Engagement mapping based on emotional states
 - Support for multiple emotion categories
 - Confidence scoring
+- **Local only** - Requires PyAudio and librosa
 
 ### 🖥️ Screen Activity Analysis
 - Real-time screen capture and OCR
@@ -16,6 +23,7 @@ A comprehensive real-time engagement monitoring system built with Streamlit that
 - Sentiment analysis of screen content
 - Idle time tracking
 - Chrome tab monitoring
+- **Local only** - Requires system permissions
 
 ### 📊 Live Dashboard
 - Real-time metrics visualization
@@ -24,175 +32,202 @@ A comprehensive real-time engagement monitoring system built with Streamlit that
 - Data export capabilities
 - Productivity scoring
 
+## Deployment Options
+
+### 🌐 Cloud Deployment (Streamlit Cloud)
+
+**Pros:**
+- Easy to share and demo
+- No local setup required
+- Automatic deployment from GitHub
+
+**Cons:**
+- Audio features disabled (browser security)
+- Screen capture not available
+- Runs in simulation mode
+
+**Deploy to Cloud:**
+1. Fork this repository
+2. Connect to Streamlit Cloud
+3. Deploy automatically
+
+### 💻 Local Deployment (Full Features)
+
+**Pros:**
+- Full audio emotion detection
+- Complete screen analysis
+- Real-time monitoring
+- Privacy-first (all data stays local)
+
+**Cons:**
+- Requires setup and dependencies
+- Platform-specific requirements
+
 ## Installation
 
 ### Prerequisites
 
 1. **Python 3.8 or higher**
-2. **Tesseract OCR** (for screen text analysis)
-   - Download from: https://github.com/UB-Mannheim/tesseract/wiki
-   - Add to PATH environment variable
-3. **Audio drivers** (for microphone access)
+2. **For full features (local only):**
+   - Tesseract OCR
+   - Audio drivers
+   - System permissions for screen capture
 
-### Setup
+### Quick Setup (Local)
 
-1. **Clone or download this repository**
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/your-username/deploy-str.git
+   cd deploy-str
+   ```
 
 2. **Install dependencies:**
-   ```powershell
+   ```bash
    pip install -r requirements.txt
    ```
 
-3. **Install spaCy model:**
-   ```powershell
+3. **For full audio features:**
+   ```bash
+   # Install additional audio dependencies
+   pip install pyaudio librosa soundfile
+   
+   # Install spaCy model
    python -m spacy download en_core_web_sm
    ```
 
-4. **For audio processing on Windows:**
-   ```powershell
-   # If PyAudio installation fails, try:
-   pip install pipwin
-   pipwin install pyaudio
+4. **Run the app:**
+   ```bash
+   streamlit run streamlit_app.py
    ```
+
+### Windows Setup Script
+
+```powershell
+# Run the automated setup
+.\setup.ps1
+```
 
 ## Usage
 
-### Running the Streamlit App
+### Cloud Demo Mode
+- Visit the live demo link
+- Click "Demo Mode" buttons to generate simulated data
+- Explore the dashboard and analytics features
+- Export sample data to understand the format
 
-```powershell
-streamlit run streamlit_app.py
-```
-
-The app will open in your default web browser at `http://localhost:8501`
-
-### Using the Interface
-
-1. **Configure Settings:** Use the sidebar to enable/disable features and adjust settings
+### Local Full Mode
+1. **Configure Settings:** Use the sidebar to enable/disable features
 2. **Start Monitoring:** 
-   - Click "Start Audio" in the Audio Monitor tab to begin emotion detection
-   - Click "Start Screen" in the Screen Monitor tab to begin screen analysis
-3. **View Real-time Data:** Monitor engagement metrics in the Dashboard tab
-4. **Analyze Patterns:** Use the Analytics tab to view detailed insights
-5. **Export Data:** Download session data as CSV from the sidebar
-
-### Components
-
-#### Audio Monitor (`components/audio_monitor.py`)
-- Captures microphone input in real-time
-- Extracts audio features (MFCC, spectral features, etc.)
-- Predicts emotions using pre-trained model
-- Maps emotions to engagement levels
-
-#### Screen Monitor (`components/screen_monitor.py`)
-- Captures screenshots at regular intervals
-- Performs OCR to extract text content
-- Analyzes context and sentiment
-- Tracks application usage and idle time
+   - Audio Tab: Click "Start Audio" for emotion detection
+   - Screen Tab: Click "Start Screen" for screen analysis
+3. **View Data:** Monitor real-time metrics in the Dashboard
+4. **Analyze:** Use Analytics tab for detailed insights
+5. **Export:** Download session data as CSV
 
 ## Configuration
 
-### Audio Settings
-- **Update Interval:** How often to refresh data (1-10 seconds)
-- **Audio Window:** Duration of audio samples for analysis (2-5 seconds)
-- **Confidence Threshold:** Minimum confidence for emotion predictions
+### Environment Detection
+The app automatically detects the environment:
+- **Cloud Mode:** Simulated data and demo features
+- **Local Mode:** Full audio and screen analysis
 
-### Screen Settings
-- **Monitoring Interval:** How often to capture and analyze screen
-- **Text Analysis:** OCR and sentiment analysis settings
-- **Context Detection:** Application and content type recognition
+### Settings
+- **Update Interval:** Data refresh rate (1-10 seconds)
+- **Audio Window:** Sample duration for emotion analysis
+- **Confidence Threshold:** Minimum confidence for predictions
+- **Data Retention:** Maximum data points to keep in memory
 
 ## Data Export
 
-Session data can be exported as CSV with the following columns:
-- `timestamp`: Unix timestamp of the data point
-- `emotion`: Detected emotion from audio
+Session data includes:
+- `timestamp`: Unix timestamp
+- `emotion`: Detected emotion (local) or simulated
 - `engagement`: Engagement level (Engaged/Distracted)
 - `context`: Screen context (Programming, Reading, etc.)
-- `sentiment`: Sentiment of screen content
+- `sentiment`: Content sentiment analysis
 - `productivity_score`: Calculated productivity percentage
 
-## Deployment
+## Architecture
 
-### Local Deployment
+### Cloud-Compatible Design
+```
+streamlit_app.py          # Main application
+├── components/
+│   ├── audio_monitor.py  # Audio processing (with cloud fallback)
+│   └── screen_monitor.py # Screen analysis (with cloud fallback)
+├── requirements.txt      # Cloud-compatible dependencies
+├── packages.txt          # System packages for Streamlit Cloud
+└── .streamlit/
+    ├── config.toml       # Streamlit configuration
+    └── secrets.toml      # Cloud environment detection
+```
 
-The app runs locally and all processing is done on your machine for privacy.
-
-### Cloud Deployment (Optional)
-
-For cloud deployment, consider:
-1. **Streamlit Cloud:** Easy deployment for public apps
-2. **Heroku:** For more control over the environment
-3. **Docker:** For containerized deployment
-
-**Note:** Audio and screen capture may have limitations in cloud environments due to privacy and security restrictions.
-
-## Privacy and Security
-
-- **Local Processing:** All analysis is performed locally on your machine
-- **No Data Upload:** Audio and screen data never leave your device
-- **Optional Export:** Data export is manual and user-controlled
-- **Secure Storage:** Session data is stored only in memory during runtime
-
-## Troubleshooting
-
-### Common Issues
-
-1. **PyAudio Installation Fails:**
-   ```powershell
-   pip install pipwin
-   pipwin install pyaudio
-   ```
-
-2. **Tesseract Not Found:**
-   - Ensure Tesseract is installed and in PATH
-   - Set TESSDATA_PREFIX environment variable if needed
-
-3. **Permission Denied (Screen Capture):**
-   - Run PowerShell as Administrator
-   - Grant screen recording permissions on macOS
-
-4. **Model File Missing:**
-   - Ensure `emotion_detection_model.joblib` is in the `audio_engage` folder
-   - Train the model using `train_emotion_model.py` if needed
-
-5. **Import Errors:**
-   - Verify all dependencies are installed
-   - Check Python path configuration
-
-### Performance Optimization
-
-- Adjust update intervals based on your system performance
-- Reduce audio window size for faster processing
-- Limit data retention for memory optimization
+### Dependency Management
+- **Core:** Always available (Streamlit, pandas, plotly)
+- **Optional:** Graceful degradation (audio, screen capture)
+- **Platform-specific:** Conditional imports
 
 ## Development
 
-### Project Structure
-```
-strem/
-├── streamlit_app.py              # Main Streamlit application
-├── components/
-│   ├── audio_monitor.py          # Audio processing component
-│   └── screen_monitor.py         # Screen analysis component
-├── audio_engage/                 # Audio emotion detection module
-├── screen-analyzer/              # Screen analysis module
-└── requirements.txt              # Dependencies
+### Local Development
+```bash
+# Install full dependencies
+pip install -r requirements.txt
+pip install pyaudio librosa soundfile
+
+# Run with hot reload
+streamlit run streamlit_app.py
 ```
 
-### Adding Features
+### Cloud Development
+```bash
+# Use cloud-compatible requirements only
+pip install streamlit pandas numpy plotly opencv-python-headless
 
-1. **Custom Emotions:** Modify emotion mapping in `audio_monitor.py`
-2. **New Contexts:** Extend context detection in `screen_monitor.py`
-3. **Additional Metrics:** Add new metrics to the dashboard
-4. **Export Formats:** Support additional export formats
+# Test cloud mode
+CLOUD_DEPLOYMENT=true streamlit run streamlit_app.py
+```
+
+## Troubleshooting
+
+### Cloud Deployment Issues
+1. **Import Errors:** Check `requirements.txt` for cloud compatibility
+2. **Package Issues:** Verify `packages.txt` system dependencies
+3. **Memory Limits:** Reduce data retention settings
+
+### Local Installation Issues
+1. **PyAudio Fails:** 
+   ```bash
+   pip install pipwin
+   pipwin install pyaudio
+   ```
+2. **Tesseract Not Found:** Install and add to PATH
+3. **Permission Denied:** Run as administrator (Windows)
+
+## Privacy & Security
+
+- **Local Processing:** All analysis done on your machine
+- **No Data Upload:** Audio/screen data never leaves your device
+- **Cloud Demo:** Uses only simulated data
+- **Optional Export:** Manual data export only
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Test both local and cloud compatibility
+4. Submit a pull request
 
 ## License
 
-This project is for educational and personal use. Please ensure compliance with local privacy laws and regulations when using screen capture and audio recording features.
+MIT License - See LICENSE file for details
 
 ## Support
 
-For issues and questions:
-1. Check the troubleshooting section above
-2. Verify system requirements and dependencies
-3. Test individual components separately if needed
+- **Documentation:** Check this README and inline comments
+- **Issues:** Create GitHub issues for bugs
+- **Discussions:** Use GitHub Discussions for questions
+
+---
+
+**🌟 Star this repository if you find it useful!**

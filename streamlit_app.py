@@ -26,8 +26,11 @@ try:
     from screen_monitor import render_screen_component, get_screen_processor, render_context_insights, get_productivity_score
     COMPONENTS_AVAILABLE = True
 except ImportError as e:
-    st.error(f"Components not available: {e}")
+    st.warning(f"Some components not available: {e}")
     COMPONENTS_AVAILABLE = False
+
+# Check if running in cloud environment
+CLOUD_MODE = hasattr(st, 'secrets') and st.secrets.get('CLOUD_DEPLOYMENT', False)
 
 # Set page config
 st.set_page_config(
@@ -78,12 +81,21 @@ def main():
     # Title and description
     st.markdown('<h1 class="main-header">🎯 Real-time Engagement Monitor</h1>', unsafe_allow_html=True)
     
+    if CLOUD_MODE:
+        st.info("🌐 **Cloud Demo Mode** - Running with simulated data for demonstration")
+    
     st.markdown("""
     ### A comprehensive engagement monitoring system that combines:
     - 🎤 **Audio Emotion Detection** - Real-time analysis of emotional state through voice
     - 🖥️ **Screen Activity Analysis** - Context detection, sentiment analysis, and productivity monitoring
     - 📊 **Live Dashboard** - Real-time visualization of engagement metrics
     """)
+    
+    if CLOUD_MODE:
+        st.markdown("""
+        **Note:** This cloud version uses simulated data for demonstration. 
+        For full functionality with real audio and screen capture, please run locally.
+        """)
     
     # Check if components are available
     if not COMPONENTS_AVAILABLE:

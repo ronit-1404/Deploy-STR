@@ -1,5 +1,4 @@
 import streamlit as st
-import cv2
 import numpy as np
 import time
 import threading
@@ -8,26 +7,51 @@ from pathlib import Path
 import sys
 import os
 
-# Add necessary paths
-current_dir = Path(__file__).parent.parent
-screen_path = current_dir / "screen-analyzer"
-shared_path = screen_path / "shared"
-windows_path = screen_path / "windows"
-
-sys.path.extend([str(shared_path), str(windows_path)])
-
+# Check for screen analysis dependencies
 try:
-    from win_capture import capture_screen
-    from win_window import get_active_app
-    from idle_tracker_win import get_idle_time
-    from ocr import extract_text
-    from context import detect_context
-    from sentiment import analyze_sentiment
-    from chrome_tab import get_chrome_tab_info
+    import cv2
+    import pytesseract
+    from PIL import Image
+    import spacy
+    from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
     SCREEN_ANALYSIS_AVAILABLE = True
 except ImportError as e:
-    st.warning(f"Screen analysis modules not available: {e}")
     SCREEN_ANALYSIS_AVAILABLE = False
+
+# Platform-specific imports
+PLATFORM_AVAILABLE = False
+if SCREEN_ANALYSIS_AVAILABLE:
+    try:
+        # Try to import platform-specific modules
+        current_dir = Path(__file__).parent.parent
+        screen_path = current_dir / "screen-analyzer"
+        shared_path = screen_path / "shared"
+        windows_path = screen_path / "windows"
+        
+        sys.path.extend([str(shared_path), str(windows_path)])
+        
+        # Import based on platform or use fallback
+        import platform
+        if platform.system() == "Windows":
+            from win_capture import capture_screen
+            from win_window import get_active_app
+            from idle_tracker_win import get_idle_time
+        else:
+            # Fallback for cloud/Linux environments
+            def capture_screen():
+                return None
+            def get_active_app():
+                return "Cloud Environment"
+            def get_idle_time():
+                return 0
+        
+        from ocr import extract_text
+        from context import detect_context
+        from sentiment import analyze_sentiment
+        from chrome_tab import get_chrome_tab_info
+        PLATFORM_AVAILABLE = True
+    except ImportError:
+        PLATFORM_AVAILABLE = False
 
 class StreamlitScreenProcessor:
     """Screen processor adapted for Streamlit"""
@@ -146,8 +170,35 @@ def get_screen_processor():
 
 def render_screen_component():
     """Render the screen monitoring component"""
-    if not SCREEN_ANALYSIS_AVAILABLE:
-        st.error("Screen analysis not available. Please check dependencies.")
+    if not SCREEN_ANALYSIS_AVAILABLE or not PLATFORM_AVAILABLE:
+        st.warning("🖥️ Screen analysis not available in cloud environment")
+        st.info("Screen monitoring requires local installation with system access")
+        
+        # Show demo mode
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("📊 Demo Context Analysis"):
+                st.session_state.current_context = "Programming"
+                st.session_state.current_sentiment = "Positive"
+                st.success("Demo context data generated!")
+        
+        with col2:
+            if st.button("🎯 Demo Productivity Mode"):
+                st.session_state.current_context = "Learning"
+                st.session_state.current_sentiment = "Neutral"
+                st.success("Demo productivity data generated!")
+        
+        # Show simulated metrics
+        if st.session_state.get('current_context', 'Unknown') != 'Unknown':
+            st.subheader("📊 Simulated Analysis")
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric("Context", st.session_state.current_context)
+                st.metric("Sentiment", st.session_state.current_sentiment)
+            with col2:
+                st.metric("Productivity Score", "75%")
+                st.metric("Focus Level", "High")
+        
         return None
     
     processor = get_screen_processor()
