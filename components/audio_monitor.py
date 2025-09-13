@@ -227,27 +227,55 @@ def render_audio_component():
         st.info("Audio emotion detection requires local installation with PyAudio and librosa")
         
         # Show demo mode
-        if st.button("🎭 Demo Mode (Simulated Data)"):
-            st.session_state.current_emotion = "Happy"
-            st.session_state.current_engagement = "Engaged"
-            st.success("Demo data generated!")
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("🎭 Demo Happy Mode"):
+                st.session_state.current_emotion = "Happy"
+                st.session_state.current_engagement = "Engaged"
+                st.session_state.emotion_confidence = 0.85
+                st.success("Demo Happy emotion generated!")
+                st.rerun()
+        
+        with col2:
+            if st.button("🤖 Demo Neutral Mode"):
+                st.session_state.current_emotion = "Neutral"
+                st.session_state.current_engagement = "Focused"
+                st.session_state.emotion_confidence = 0.72
+                st.success("Demo Neutral emotion generated!")
+                st.rerun()
+        
+        # Show demo metrics if available
+        if st.session_state.get('current_emotion'):
+            st.subheader("🎭 Audio Analysis")
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric("Current Emotion", st.session_state.current_emotion)
+                st.metric("Engagement", st.session_state.current_engagement)
+            with col2:
+                st.metric("Confidence", f"{st.session_state.get('emotion_confidence', 0.0):.1%}")
+                st.metric("Audio Level", "Normal")
         
         return None
     
     processor = get_audio_processor()
     
-    # Audio status
+    # Initialize session state
     if 'audio_active' not in st.session_state:
         st.session_state.audio_active = False
+    if 'audio_data' not in st.session_state:
+        st.session_state.audio_data = []
+    if 'last_audio_update' not in st.session_state:
+        st.session_state.last_audio_update = 0
     
     # Audio controls
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     
     with col1:
         if st.button("🎤 Start Audio", disabled=st.session_state.audio_active):
             if processor.start_recording():
                 st.session_state.audio_active = True
                 st.success("Audio monitoring started!")
+                st.rerun()
             else:
                 st.error("Failed to start audio monitoring")
     
@@ -256,6 +284,12 @@ def render_audio_component():
             processor.stop_recording()
             st.session_state.audio_active = False
             st.info("Audio monitoring stopped")
+            st.rerun()
+    
+    with col3:
+        if st.session_state.audio_active:
+            if st.button("🔄 Refresh Audio"):
+                st.rerun()
     
     # Display audio status
     if st.session_state.audio_active:
@@ -263,15 +297,42 @@ def render_audio_component():
         
         # Get latest analysis
         analysis = processor.get_latest_analysis()
-        if analysis:
+        current_time = time.time()
+        
+        if analysis and current_time - st.session_state.last_audio_update > 1:
             st.session_state.current_emotion = analysis['emotion'].title()
             st.session_state.current_engagement = analysis['engagement']
+            st.session_state.emotion_confidence = analysis['confidence']
+            st.session_state.last_audio_update = current_time
             
-            # Display current analysis
-            st.metric("Current Emotion", analysis['emotion'].title())
-            st.metric("Confidence", f"{analysis['confidence']:.2f}")
-            st.metric("Engagement", analysis['engagement'])
+            # Store data for history
+            st.session_state.audio_data.append(analysis)
+            if len(st.session_state.audio_data) > 50:  # Keep last 50 entries
+                st.session_state.audio_data = st.session_state.audio_data[-50:]
+        
+        # Display current analysis
+        if st.session_state.get('current_emotion'):
+            st.subheader("🎭 Current Audio Analysis")
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric("Current Emotion", st.session_state.current_emotion)
+                st.metric("Engagement", st.session_state.current_engagement)
+            
+            with col2:
+                confidence = st.session_state.get('emotion_confidence', 0.0)
+                st.metric("Confidence", f"{confidence:.1%}")
+                st.metric("Status", "Listening...")
+            
+            # Auto-refresh indicator
+            st.write(f"🔄 Last updated: {time.strftime('%H:%M:%S')}")
+        else:
+            st.info("⏳ Waiting for audio data...")
+        
+        # Auto-refresh mechanism
+        if analysis:
+            time.sleep(0.5)  # Small delay to prevent too frequent updates
+            st.rerun()
     else:
-        st.info("🔴 Audio monitoring inactive")
+        st.info("🔴 Audio monitoring inactive - Click 'Start Audio' to begin")
     
     return processor if st.session_state.audio_active else None

@@ -2,6 +2,4 @@ libgl1-mesa-glx
 libglib2.0-0
 tesseract-ocr
 tesseract-ocr-eng
-libasound2-dev
-portaudio19-dev
 libgomp1

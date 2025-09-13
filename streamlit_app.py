@@ -30,7 +30,23 @@ except ImportError as e:
     COMPONENTS_AVAILABLE = False
 
 # Check if running in cloud environment
-CLOUD_MODE = hasattr(st, 'secrets') and st.secrets.get('CLOUD_DEPLOYMENT', False)
+try:
+    # Multiple ways to detect cloud environment
+    import os
+    CLOUD_MODE = (
+        # Check environment variables that indicate cloud deployment
+        os.getenv('STREAMLIT_SHARING') is not None or
+        os.getenv('STREAMLIT_CLOUD') is not None or
+        # Check if we're running on common cloud platforms
+        'streamlit' in os.getenv('USER', '').lower() or
+        'app' in os.getenv('USER', '').lower() or
+        # Check for typical cloud paths
+        '/app' in os.getcwd() or
+        # Check if audio libraries are available (they won't be in cloud)
+        not COMPONENTS_AVAILABLE
+    )
+except:
+    CLOUD_MODE = False
 
 # Set page config
 st.set_page_config(

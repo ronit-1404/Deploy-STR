@@ -14,9 +14,25 @@ try:
     from PIL import Image
     import spacy
     from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+    
+    # Try to load spacy model, download if needed
+    try:
+        nlp = spacy.load("en_core_web_sm")
+    except OSError:
+        # Model not found, try to download it
+        import subprocess
+        import sys
+        try:
+            subprocess.check_call([sys.executable, "-m", "spacy", "download", "en_core_web_sm"])
+            nlp = spacy.load("en_core_web_sm")
+        except:
+            # If download fails, use a simple fallback
+            nlp = None
+    
     SCREEN_ANALYSIS_AVAILABLE = True
 except ImportError as e:
     SCREEN_ANALYSIS_AVAILABLE = False
+    nlp = None
 
 # Platform-specific imports
 PLATFORM_AVAILABLE = False
@@ -181,12 +197,14 @@ def render_screen_component():
                 st.session_state.current_context = "Programming"
                 st.session_state.current_sentiment = "Positive"
                 st.success("Demo context data generated!")
+                st.rerun()
         
         with col2:
             if st.button("🎯 Demo Productivity Mode"):
                 st.session_state.current_context = "Learning"
                 st.session_state.current_sentiment = "Neutral"
                 st.success("Demo productivity data generated!")
+                st.rerun()
         
         # Show simulated metrics
         if st.session_state.get('current_context', 'Unknown') != 'Unknown':
@@ -203,18 +221,23 @@ def render_screen_component():
     
     processor = get_screen_processor()
     
-    # Screen monitoring status
+    # Initialize session state
     if 'screen_active' not in st.session_state:
         st.session_state.screen_active = False
+    if 'screen_data' not in st.session_state:
+        st.session_state.screen_data = []
+    if 'last_screen_update' not in st.session_state:
+        st.session_state.last_screen_update = 0
     
     # Screen controls
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     
     with col1:
         if st.button("🖥️ Start Screen", disabled=st.session_state.screen_active):
             if processor.start_monitoring():
                 st.session_state.screen_active = True
                 st.success("Screen monitoring started!")
+                st.rerun()
             else:
                 st.error("Failed to start screen monitoring")
     
@@ -223,6 +246,12 @@ def render_screen_component():
             processor.stop_monitoring()
             st.session_state.screen_active = False
             st.info("Screen monitoring stopped")
+            st.rerun()
+    
+    with col3:
+        if st.session_state.screen_active:
+            if st.button("🔄 Refresh Data"):
+                st.rerun()
     
     # Display screen status
     if st.session_state.screen_active:
@@ -230,33 +259,56 @@ def render_screen_component():
         
         # Get latest analysis
         analysis = processor.get_latest_analysis()
-        if analysis:
+        current_time = time.time()
+        
+        if analysis and current_time - st.session_state.last_screen_update > 1:
             # Update session state
             st.session_state.current_context = analysis['context']
             st.session_state.current_sentiment = analysis['sentiment']
+            st.session_state.last_screen_update = current_time
             
-            # Display current analysis
+            # Store data for history
+            st.session_state.screen_data.append(analysis)
+            if len(st.session_state.screen_data) > 50:  # Keep last 50 entries
+                st.session_state.screen_data = st.session_state.screen_data[-50:]
+        
+        # Display current analysis
+        if st.session_state.screen_data:
             st.subheader("📊 Current Screen Analysis")
             
             col1, col2 = st.columns(2)
             with col1:
-                st.metric("Active App", analysis['active_app'])
-                st.metric("Context", analysis['context'])
-                st.metric("Sentiment", analysis['sentiment'])
+                latest = st.session_state.screen_data[-1]
+                st.metric("Active App", latest['active_app'])
+                st.metric("Context", latest['context'])
+                st.metric("Sentiment", latest['sentiment'])
             
             with col2:
-                st.metric("Idle Time (s)", analysis['idle_seconds'])
-                st.metric("Text Length", analysis['text_length'])
+                latest = st.session_state.screen_data[-1]
+                st.metric("Idle Time (s)", latest['idle_seconds'])
+                st.metric("Text Length", latest['text_length'])
                 
-                if analysis['chrome_title']:
-                    st.metric("Chrome Tab", analysis['chrome_title'][:30] + "..." if len(analysis['chrome_title']) > 30 else analysis['chrome_title'])
+                if latest.get('chrome_title'):
+                    title = latest['chrome_title']
+                    display_title = title[:30] + "..." if len(title) > 30 else title
+                    st.metric("Chrome Tab", display_title)
             
             # Show recent text content (if any)
-            if analysis['text_content']:
+            if latest.get('text_content'):
                 with st.expander("📝 Recent Text Content"):
-                    st.text_area("Detected Text", analysis['text_content'], height=100)
+                    st.text_area("Detected Text", latest['text_content'], height=100)
+            
+            # Auto-refresh indicator
+            st.write(f"🔄 Last updated: {time.strftime('%H:%M:%S', time.localtime(latest['timestamp']))}")
+        else:
+            st.info("⏳ Waiting for screen data...")
+        
+        # Auto-refresh mechanism
+        if analysis:
+            time.sleep(0.5)  # Small delay to prevent too frequent updates
+            st.rerun()
     else:
-        st.info("🔴 Screen monitoring inactive")
+        st.info("🔴 Screen monitoring inactive - Click 'Start Screen' to begin")
     
     return processor if st.session_state.screen_active else None
 
