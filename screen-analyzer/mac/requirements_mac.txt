@@ -1,0 +1,7 @@
+opencv-python
+pytesseract
+Pillow
+spacy
+textblob
+pyobjc #pyobjc allows native mac API access to get iska idle time/cursor/keyboard tracking
+vaderSentiment # vaderSentiment is used for sentiment analysis
